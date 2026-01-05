@@ -29,7 +29,6 @@
           ref="fileInput"
           type="file"
           accept="image/*"
-          capture="environment"
           style="display: none"
           @change="handleImageSelect"
         >
