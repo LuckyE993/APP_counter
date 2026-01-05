@@ -32,13 +32,19 @@
       </div>
 
       <div v-else class="actions">
-        <a :href="favaUrl" class="btn btn-primary">
-          打开Fava账本
-        </a>
         <button @click="handleStop" class="btn btn-secondary">
           停止Fava
         </button>
       </div>
+    </div>
+
+    <!-- Fava iframe -->
+    <div v-if="favaRunning && !loading && !error" class="fava-container">
+      <iframe 
+        :src="favaUrl" 
+        class="fava-iframe"
+        title="Fava"
+      ></iframe>
     </div>
   </div>
 </template>
@@ -263,6 +269,21 @@ h2 {
 .actions .btn {
   flex: 1;
   min-height: 44px;
+}
+
+.fava-container {
+  margin-top: 1rem;
+  height: calc(100vh - 280px);
+  min-height: 500px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.fava-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 
 /* 触摸设备优化 */

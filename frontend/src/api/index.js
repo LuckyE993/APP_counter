@@ -7,8 +7,15 @@ const api = axios.create({
 
 // Token管理
 const getToken = () => localStorage.getItem('token')
-const setToken = (token) => localStorage.setItem('token', token)
-const removeToken = () => localStorage.removeItem('token')
+const setToken = (token) => {
+  localStorage.setItem('token', token)
+  // 同时设置 cookie 供 Fava 认证使用
+  document.cookie = `fava_token=${token}; path=/; SameSite=Lax`
+}
+const removeToken = () => {
+  localStorage.removeItem('token')
+  document.cookie = 'fava_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+}
 
 // 请求拦截器：自动添加token
 api.interceptors.request.use(config => {

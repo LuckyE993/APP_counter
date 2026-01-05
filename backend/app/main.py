@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException, Cookie
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 from contextlib import asynccontextmanager
 import httpx
+from jose import JWTError, jwt
 from .api.routes import router
 from .config import settings
 from .services.fava_service import FavaService
@@ -46,30 +47,46 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
-@app.api_route("/api/fava/proxy/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def fava_proxy(path: str, request: Request):
-    """Fava 服务代理"""
+def verify_fava_token(token: str) -> bool:
+    """验证 Fava 访问 token"""
+    if not token:
+        return False
+    try:
+        jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        return True
+    except JWTError:
+        return False
+
+@app.api_route("/fava/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+async def fava_proxy_auth(path: str, request: Request, fava_token: str = Cookie(None)):
+    """带认证的 Fava 代理"""
+    # 验证 token
+    if not verify_fava_token(fava_token):
+        # 未认证，重定向到登录页
+        return RedirectResponse(url="/login?redirect=/fava/", status_code=302)
+    
     if not FavaService.is_running():
-        return {"error": "Fava service is not running"}, 503
+        raise HTTPException(status_code=503, detail="Fava service is not running")
     
-    fava_url = f"http://localhost:5000/{path}"
+    fava_url = f"http://localhost:5000/fava/{path}"
+    if request.query_params:
+        fava_url += f"?{request.query_params}"
     
-    async with httpx.AsyncClient() as client:
-        # 转发请求
-        headers = dict(request.headers)
-        headers.pop("host", None)
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        headers = {k: v for k, v in request.headers.items() if k.lower() not in ["host", "cookie"]}
         
         response = await client.request(
             method=request.method,
             url=fava_url,
             headers=headers,
-            params=request.query_params,
             content=await request.body(),
         )
         
-        # 返回响应
+        excluded_headers = ["content-encoding", "transfer-encoding", "content-length"]
+        resp_headers = {k: v for k, v in response.headers.items() if k.lower() not in excluded_headers}
+        
         return StreamingResponse(
-            response.aiter_bytes(),
+            iter([response.content]),
             status_code=response.status_code,
-            headers=dict(response.headers),
+            headers=resp_headers,
         )

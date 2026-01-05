@@ -139,3 +139,8 @@ async def get_fava_status(username: str = Depends(verify_token)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get Fava status: {str(e)}")
 
+@router.get("/auth/verify")
+async def verify_auth(username: str = Depends(verify_token)):
+    """验证token，供nginx auth_request使用"""
+    return {"status": "ok"}
+
