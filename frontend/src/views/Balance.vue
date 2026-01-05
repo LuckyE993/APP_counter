@@ -75,7 +75,7 @@ const checkStatus = async () => {
     if (status.running && status.port) {
       // 使用当前主机地址 + Fava 端口
       const host = window.location.hostname
-      favaUrl.value = `http://${host}:${status.port}/`
+      favaUrl.value = `${window.location.origin}/api/fava/proxy/`
     }
   } catch (err) {
     error.value = '无法连接到后端服务: ' + (err.response?.data?.detail || err.message)
@@ -95,7 +95,7 @@ const handleStart = async () => {
       favaRunning.value = true
       // 使用当前主机地址 + Fava 端口
       const host = window.location.hostname
-      favaUrl.value = `http://${host}:${result.port}/`
+      favaUrl.value = `${window.location.origin}/api/fava/proxy/`
       // 等待一下让Fava完全启动
       setTimeout(() => {
         loading.value = false
