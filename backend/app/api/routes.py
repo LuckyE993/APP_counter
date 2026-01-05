@@ -1,5 +1,5 @@
 import base64
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from ..models.schemas import (
     ImageParseRequest,
     TextParseRequest,
@@ -8,15 +8,25 @@ from ..models.schemas import (
     BalanceResponse,
     ParseResponse
 )
+from ..models.auth import LoginRequest, Token
 from ..services.vlm_factory import get_vlm_service
 from ..services.beancount_ops import BeancountService
 from ..services.fava_service import FavaService
 from ..services.prompts import get_image_parse_prompt, get_text_parse_prompt
+from ..utils.auth import authenticate_user, create_access_token, verify_token
 
 router = APIRouter(prefix="/api")
 
+@router.post("/login", response_model=Token)
+async def login(request: LoginRequest):
+    if not authenticate_user(request.username, request.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    access_token = create_access_token(data={"sub": request.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
 @router.post("/parse/image", response_model=ParseResponse)
-async def parse_image(request: ImageParseRequest):
+async def parse_image(request: ImageParseRequest, username: str = Depends(verify_token)):
     try:
         image_data = base64.b64decode(request.image)
         vlm_service = get_vlm_service()
@@ -27,7 +37,7 @@ async def parse_image(request: ImageParseRequest):
         raise HTTPException(status_code=500, detail=f"Failed to parse image: {str(e)}")
 
 @router.post("/parse/text", response_model=ParseResponse)
-async def parse_text(request: TextParseRequest):
+async def parse_text(request: TextParseRequest, username: str = Depends(verify_token)):
     try:
         vlm_service = get_vlm_service()
         result = await vlm_service.parse_text(request.text, get_text_parse_prompt())
@@ -37,7 +47,7 @@ async def parse_text(request: TextParseRequest):
         raise HTTPException(status_code=500, detail=f"Failed to parse text: {str(e)}")
 
 @router.post("/transaction", response_model=TransactionResponse)
-async def save_transaction(request: TransactionRequest):
+async def save_transaction(request: TransactionRequest, username: str = Depends(verify_token)):
     try:
         beancount_service = BeancountService()
         success = beancount_service.append_transaction(
@@ -59,7 +69,7 @@ async def save_transaction(request: TransactionRequest):
         raise HTTPException(status_code=500, detail=f"Failed to save transaction: {str(e)}")
 
 @router.get("/balance", response_model=BalanceResponse)
-async def get_balance():
+async def get_balance(username: str = Depends(verify_token)):
     try:
         beancount_service = BeancountService()
         balances = beancount_service.get_balances()
@@ -68,7 +78,7 @@ async def get_balance():
         raise HTTPException(status_code=500, detail=f"Failed to get balance: {str(e)}")
 
 @router.get("/accounts")
-async def get_accounts():
+async def get_accounts(username: str = Depends(verify_token)):
     try:
         beancount_service = BeancountService()
         accounts = beancount_service.get_accounts()
@@ -77,7 +87,7 @@ async def get_accounts():
         raise HTTPException(status_code=500, detail=f"Failed to get accounts: {str(e)}")
 
 @router.get("/config/accounts")
-async def get_account_config():
+async def get_account_config(username: str = Depends(verify_token)):
     """
     获取账户配置，包括支付方式、分类等
     前端使用此配置来动态生成选项，确保与 accounts.beancount 严格对应
@@ -90,7 +100,7 @@ async def get_account_config():
         raise HTTPException(status_code=500, detail=f"Failed to get account config: {str(e)}")
 
 @router.post("/fava/start")
-async def start_fava(port: int = 5000):
+async def start_fava(port: int = 5000, username: str = Depends(verify_token)):
     """启动Fava服务"""
     try:
         success = FavaService.start(port)
@@ -106,7 +116,7 @@ async def start_fava(port: int = 5000):
         raise HTTPException(status_code=500, detail=f"Failed to start Fava: {str(e)}")
 
 @router.post("/fava/stop")
-async def stop_fava():
+async def stop_fava(username: str = Depends(verify_token)):
     """停止Fava服务"""
     try:
         success = FavaService.stop()
@@ -118,7 +128,7 @@ async def stop_fava():
         raise HTTPException(status_code=500, detail=f"Failed to stop Fava: {str(e)}")
 
 @router.get("/fava/status")
-async def get_fava_status():
+async def get_fava_status(username: str = Depends(verify_token)):
     """获取Fava服务状态"""
     try:
         is_running = FavaService.is_running()

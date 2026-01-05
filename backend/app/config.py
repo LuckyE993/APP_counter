@@ -8,6 +8,15 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o"
     OPENAI_BASE_URL: str | None = None
     CLAUDE_MODEL: str = "claude-opus-4-5-20251101"
+    
+    # 认证配置
+    SECRET_KEY: str = "your-secret-key-change-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 * 24 * 60  # 30天
+    
+    # 简单用户配置
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "admin123"
 
     # 主账本路径（用于读取余额和账户）
     BEANCOUNT_MAIN_PATH: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "main.beancount")

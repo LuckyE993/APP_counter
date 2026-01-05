@@ -1,12 +1,13 @@
 <template>
   <div id="app">
-    <header class="app-header">
+    <header v-if="showHeader" class="app-header">
       <h1>Beancount记账</h1>
+      <button @click="handleLogout" class="logout-btn">退出</button>
     </header>
     <main class="app-main">
       <router-view />
     </main>
-    <nav class="app-nav">
+    <nav v-if="showNav" class="app-nav">
       <router-link to="/" class="nav-item">
         <span>📷</span>
         <span>记账</span>
@@ -19,7 +20,25 @@
   </div>
 </template>
 
-<script setup>
+<script>
+import { logout, isAuthenticated } from './api'
+
+export default {
+  name: 'App',
+  computed: {
+    showHeader() {
+      return this.$route.path !== '/login'
+    },
+    showNav() {
+      return this.$route.path !== '/login'
+    }
+  },
+  methods: {
+    handleLogout() {
+      logout()
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -32,11 +51,29 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .app-header h1 {
   font-size: 1.125rem;
   font-weight: 600;
+  margin: 0;
+}
+
+.logout-btn {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.logout-btn:hover {
+  background: rgba(255,255,255,0.3);
 }
 
 @media (min-width: 768px) {
