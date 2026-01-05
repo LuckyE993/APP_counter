@@ -6,6 +6,7 @@ services:
     container_name: beancount-backend
     ports:
       - "8000:8000"
+      - "5000:5000"
     volumes:
       - ./backend/data:/app/data
     env_file:

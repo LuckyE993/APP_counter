@@ -19,13 +19,13 @@ class FavaService:
         
         try:
             cls._port = port
-            # 启动fava服务
+            # 启动fava服务，绑定到0.0.0.0以支持外部访问
             cls._process = subprocess.Popen(
                 [
                     "fava",
                     settings.BEANCOUNT_MAIN_PATH,
                     "-p", str(port),
-                    "--host", "127.0.0.1"
+                    "--host", "0.0.0.0"
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -72,6 +72,6 @@ class FavaService:
         return cls._process.poll() is None
     
     @classmethod
-    def get_url(cls) -> str:
+    def get_url(cls, host: str = "localhost") -> str:
         """获取Fava访问URL"""
-        return f"http://127.0.0.1:{cls._port}"
+        return f"http://{host}:{cls._port}"

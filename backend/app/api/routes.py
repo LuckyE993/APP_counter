@@ -105,10 +105,11 @@ async def start_fava(port: int = 5000, username: str = Depends(verify_token)):
     try:
         success = FavaService.start(port)
         if success:
+            # 返回相对路径，让前端通过后端代理访问
             return {
                 "success": True,
                 "message": "Fava started successfully",
-                "url": FavaService.get_url()
+                "url": "/api/fava/proxy/"
             }
         else:
             raise HTTPException(status_code=500, detail="Failed to start Fava")
@@ -134,7 +135,7 @@ async def get_fava_status(username: str = Depends(verify_token)):
         is_running = FavaService.is_running()
         return {
             "running": is_running,
-            "url": FavaService.get_url() if is_running else None
+            "url": "/api/fava/proxy/" if is_running else None
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get Fava status: {str(e)}")
