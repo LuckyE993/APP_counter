@@ -60,21 +60,27 @@ const loadingMessage = ref('检查服务状态...')
 const error = ref('')
 let statusCheckInterval = null
 
-const checkStatus = async () => {
+const checkStatus = async (silent = false) => {
   try {
-    loading.value = true
-    loadingMessage.value = '检查Fava状态...'
+    if (!silent) {
+      loading.value = true
+      loadingMessage.value = '检查Fava状态...'
+    }
     error.value = ''
     
     const status = await getFavaStatus()
     favaRunning.value = status.running
-    if (status.running) {
+    if (status.running && !favaUrl.value) {
       favaUrl.value = `${window.location.origin}/fava/`
     }
   } catch (err) {
-    error.value = '无法连接到后端服务: ' + (err.response?.data?.detail || err.message)
+    if (!silent) {
+      error.value = '无法连接到后端服务: ' + (err.response?.data?.detail || err.message)
+    }
   } finally {
-    loading.value = false
+    if (!silent) {
+      loading.value = false
+    }
   }
 }
 
@@ -119,8 +125,8 @@ const handleStop = async () => {
 
 onMounted(() => {
   checkStatus()
-  // 每30秒检查一次状态
-  statusCheckInterval = setInterval(checkStatus, 30000)
+  // 每30秒静默检查一次状态
+  statusCheckInterval = setInterval(() => checkStatus(true), 30000)
 })
 
 onUnmounted(() => {
