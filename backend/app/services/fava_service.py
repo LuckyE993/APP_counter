@@ -19,13 +19,14 @@ class FavaService:
         
         try:
             cls._port = port
-            # 启动fava服务，绑定到0.0.0.0以支持外部访问
+            # 启动fava服务，绑定到0.0.0.0以支持外部访问，使用 /fava 前缀
             cls._process = subprocess.Popen(
                 [
                     "fava",
                     settings.BEANCOUNT_MAIN_PATH,
                     "-p", str(port),
-                    "--host", "0.0.0.0"
+                    "--host", "0.0.0.0",
+                    "--prefix", "/fava"
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

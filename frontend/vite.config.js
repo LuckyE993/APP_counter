@@ -36,6 +36,10 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true
+      },
+      '/fava': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
       }
     }
   }

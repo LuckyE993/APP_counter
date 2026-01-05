@@ -32,23 +32,13 @@
       </div>
 
       <div v-else class="actions">
-        <a :href="favaUrl" target="_blank" class="btn btn-primary">
-          在新窗口打开Fava
+        <a :href="favaUrl" class="btn btn-primary">
+          打开Fava账本
         </a>
         <button @click="handleStop" class="btn btn-secondary">
           停止Fava
         </button>
       </div>
-    </div>
-
-    <!-- Fava iframe -->
-    <div v-if="favaRunning && !error" class="fava-container">
-      <iframe 
-        :src="favaUrl" 
-        frameborder="0"
-        class="fava-iframe"
-        title="Fava - Beancount Web Interface"
-      ></iframe>
     </div>
   </div>
 </template>
@@ -72,10 +62,8 @@ const checkStatus = async () => {
     
     const status = await getFavaStatus()
     favaRunning.value = status.running
-    if (status.running && status.port) {
-      // 使用当前主机地址 + Fava 端口
-      const host = window.location.hostname
-      favaUrl.value = `${window.location.origin}/api/fava/proxy/`
+    if (status.running) {
+      favaUrl.value = `${window.location.origin}/fava/`
     }
   } catch (err) {
     error.value = '无法连接到后端服务: ' + (err.response?.data?.detail || err.message)
@@ -93,9 +81,7 @@ const handleStart = async () => {
     const result = await startFava()
     if (result.success) {
       favaRunning.value = true
-      // 使用当前主机地址 + Fava 端口
-      const host = window.location.hostname
-      favaUrl.value = `${window.location.origin}/api/fava/proxy/`
+      favaUrl.value = `${window.location.origin}/fava/`
       // 等待一下让Fava完全启动
       setTimeout(() => {
         loading.value = false
@@ -277,35 +263,6 @@ h2 {
 .actions .btn {
   flex: 1;
   min-height: 44px;
-}
-
-.fava-container {
-  margin-top: 1rem;
-  height: calc(100vh - 200px);
-  min-height: 400px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-@media (min-width: 768px) {
-  .fava-container {
-    height: calc(100vh - 280px);
-    min-height: 600px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .fava-container {
-    height: calc(100vh - 320px);
-    min-height: 700px;
-  }
-}
-
-.fava-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
 }
 
 /* 触摸设备优化 */
