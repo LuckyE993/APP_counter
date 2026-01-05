@@ -1,4 +1,4 @@
-const CACHE_NAME = 'beancount-v1';
+const CACHE_NAME = 'beancount-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -28,6 +28,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // 不拦截 /fava/ 路径的请求
+  if (event.request.url.includes('/fava')) {
+    return;
+  }
   event.respondWith(
     fetch(event.request).catch(() => {
       return caches.match(event.request);
