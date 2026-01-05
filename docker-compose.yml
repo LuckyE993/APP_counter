@@ -17,6 +17,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - beancount-network
 
   frontend:
     build: ./frontend
@@ -26,6 +28,8 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - beancount-network
 
   nginx:
     image: nginx:alpine
@@ -41,6 +45,8 @@ services:
       - backend
       - frontend
     restart: unless-stopped
+    networks:
+      - beancount-network
 
   certbot:
     image: certbot/certbot
@@ -49,3 +55,9 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - beancount-network
+
+networks:
+  beancount-network:
+    driver: bridge
